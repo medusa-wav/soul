@@ -344,11 +344,11 @@
 
 <!-- FIREBASE MODULE -->
 <script type="module">
-  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp }      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-                              from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc }
-                              from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+                                 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getDatabase, ref, get, set }
+                                 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const cfg = {
     apiKey:            "AIzaSyA8DI8tyA_ZblKpj-UmMIq1PVYzkJ2aNzQ",
@@ -357,16 +357,16 @@
     storageBucket:     "o-maquinario-do-fim.firebasestorage.app",
     messagingSenderId: "190938684149",
     appId:             "1:190938684149:web:0f988af35ec4a5213f03bc",
-    measurementId:     "G-VCDX9H4M97"
+    measurementId:     "G-VCDX9H4M97",
+    databaseURL:       "https://o-maquinario-do-fim-default-rtdb.firebaseio.com"
   };
 
-  const fbApp  = initializeApp(cfg);
-  const auth   = getAuth(fbApp);
-  const db     = getFirestore(fbApp);
-  const prov   = new GoogleAuthProvider();
+  const fbApp = initializeApp(cfg);
+  const auth  = getAuth(fbApp);
+  const db    = getDatabase(fbApp);
+  const prov  = new GoogleAuthProvider();
 
-  // expose to regular script
-  window._fb = { auth, db, prov, signInWithPopup, signOut, doc, getDoc, setDoc };
+  window._fb = { auth, db, prov, signInWithPopup, signOut, ref, get, set };
 
   onAuthStateChanged(auth, user => {
     window._user = user || null;
@@ -426,9 +426,9 @@
   async function loadSheet(uid) {
     setSaveStatus('saving');
     try {
-      const { db, doc, getDoc } = window._fb;
-      const snap = await getDoc(doc(db, 'fichas', uid));
-      if (snap.exists()) fillForm(snap.data());
+      const { db, ref, get } = window._fb;
+      const snap = await get(ref(db, 'fichas/' + uid));
+      if (snap.exists()) fillForm(snap.val());
       setSaveStatus('saved');
     } catch(e) {
       setSaveStatus('error');
@@ -446,8 +446,8 @@
   async function saveSheet() {
     if (!window._user) return;
     try {
-      const { db, doc, setDoc } = window._fb;
-      await setDoc(doc(db, 'fichas', window._user.uid), collectForm());
+      const { db, ref, set } = window._fb;
+      await set(ref(db, 'fichas/' + window._user.uid), collectForm());
       setSaveStatus('saved');
     } catch(e) {
       setSaveStatus('error');
