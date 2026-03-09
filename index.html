@@ -5,41 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ficha de Personagem</title>
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-
-<!-- ═══════════════════════════════════════════════
-     🔥 FIREBASE CONFIG — substitua pelos seus dados
-     Console: https://console.firebase.google.com
-     ═══════════════════════════════════════════════ -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, serverTimestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey:            "AIzaSyA8DI8tyA_ZblKpj-UmMIq1PVYzkJ2aNzQ",
-  authDomain:        "o-maquinario-do-fim.firebaseapp.com",
-  projectId:         "o-maquinario-do-fim",
-  storageBucket:     "o-maquinario-do-fim.firebasestorage.app",
-  messagingSenderId: "190938684149",
-  appId:             "1:190938684149:web:0f988af35ec4a5213f03bc",
-  measurementId:     "G-VCDX9H4M97"
-};
-
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-
-// ── expose to global so non-module scripts can call ──
-window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut,
-               onAuthStateChanged, collection, doc, getDoc, getDocs,
-               setDoc, deleteDoc, onSnapshot, serverTimestamp };
-
-// boot when firebase is ready
-window.dispatchEvent(new Event('fb-ready'));
-</script>
-
 <style>
   :root {
     --white: #e8e4dc;
@@ -51,19 +16,18 @@ window.dispatchEvent(new Event('fb-ready'));
     --black-deep: #0a0908;
     --red: #c0392b;
     --red-dim: #7a2020;
+    --green: #4caf72;
     --border: rgba(200,195,180,0.15);
     --border-strong: rgba(200,195,180,0.35);
-    --green: #4caf72;
     --topbar-h: 52px;
-    --sidebar-w: 240px;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; }
 
   body {
     background-color: var(--black-deep);
     background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
     color: var(--white);
     font-family: 'Special Elite', serif;
     min-height: 100vh;
@@ -71,504 +35,120 @@ window.dispatchEvent(new Event('fb-ready'));
   }
 
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.025) 3px, rgba(0,0,0,0.025) 4px);
-    pointer-events: none;
-    z-index: 2000;
+    content:''; position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.025) 3px,rgba(0,0,0,0.025) 4px);
+    pointer-events:none; z-index:2000;
   }
 
-  /* ═══ TOP BAR ═══ */
+  /* ══ TOPBAR ══ */
   #topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--topbar-h);
-    background: rgba(8,7,6,0.97);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 1500;
-    gap: 16px;
+    position:fixed; top:0; left:0; right:0; height:var(--topbar-h);
+    background:rgba(8,7,6,0.97); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 24px; z-index:1500; gap:16px;
   }
+  .tb-left { display:flex; align-items:center; gap:14px; }
+  .tb-logo { font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:0.45em; color:var(--gray-mid); text-transform:uppercase; }
+  .tb-sep { width:1px; height:20px; background:var(--border); }
+  #saveStatus { font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--gray-dark); transition:color 0.4s; }
+  #saveStatus.saving { color:var(--gray-mid); }
+  #saveStatus.saved  { color:var(--green); }
+  #saveStatus.error  { color:var(--red); }
+  .tb-right { display:flex; align-items:center; gap:12px; }
+  #userAvatar { width:28px; height:28px; border-radius:50%; border:1px solid var(--border-strong); object-fit:cover; display:none; }
+  #userName { font-family:'Share Tech Mono',monospace; font-size:0.52rem; letter-spacing:0.2em; color:var(--gray-light); display:none; }
+  .tb-btn { background:transparent; border:1px solid var(--border-strong); color:var(--gray-light); font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.3em; text-transform:uppercase; padding:6px 14px; cursor:pointer; transition:all 0.2s; }
+  .tb-btn:hover { border-color:var(--off-white); color:var(--white); }
+  .tb-btn.danger:hover { border-color:var(--red); color:var(--red); }
 
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .topbar-logo {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.45em;
-    color: var(--gray-mid);
-    text-transform: uppercase;
-  }
-
-  .topbar-sep {
-    width: 1px;
-    height: 20px;
-    background: var(--border);
-  }
-
-  .topbar-sheet-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--off-white);
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* save indicator */
-  #saveStatus {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--gray-dark);
-    transition: color 0.4s;
-    flex-shrink: 0;
-  }
-  #saveStatus.saving { color: var(--gray-mid); }
-  #saveStatus.saved  { color: var(--green); }
-  #saveStatus.error  { color: var(--red); }
-
-  .topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  #userAvatar {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 1px solid var(--border-strong);
-    object-fit: cover;
-    display: none;
-  }
-
-  #userName {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 0.2em;
-    color: var(--gray-light);
-    display: none;
-  }
-
-  .topbar-btn {
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    color: var(--gray-light);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .topbar-btn:hover { border-color: var(--off-white); color: var(--white); }
-  .topbar-btn.danger:hover { border-color: var(--red); color: var(--red); }
-
-  /* ═══ LOGIN SCREEN ═══ */
+  /* ══ LOGIN ══ */
   #loginScreen {
-    position: fixed;
-    inset: 0;
-    background: var(--black-deep);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-    z-index: 3000;
-    animation: fadeIn 0.6s ease both;
+    position:fixed; inset:0; background:var(--black-deep);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:24px; z-index:3000; animation:fadeIn 0.7s ease both;
   }
+  .login-eyebrow { font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:0.5em; color:var(--gray-dark); text-transform:uppercase; }
+  .login-title { font-family:'Oswald',sans-serif; font-size:clamp(2rem,5vw,3.2rem); font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--white); text-align:center; line-height:1.1; }
+  .login-rule { display:flex; align-items:center; gap:12px; width:280px; }
+  .login-rule::before,.login-rule::after { content:''; flex:1; height:1px; background:var(--border); }
+  .login-rule span { font-family:'Share Tech Mono',monospace; font-size:0.48rem; color:var(--gray-dark); letter-spacing:0.4em; }
+  .login-sub { font-family:'Special Elite',serif; font-size:0.85rem; color:var(--gray-mid); text-align:center; max-width:280px; line-height:1.8; }
+  .google-btn { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border-strong); color:var(--off-white); font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:0.3em; text-transform:uppercase; padding:14px 28px; cursor:pointer; transition:all 0.25s; }
+  .google-btn:hover { background:rgba(255,255,255,0.07); border-color:var(--off-white); color:var(--white); }
+  .google-btn svg { width:18px; height:18px; flex-shrink:0; }
+  #loginError { font-family:'Share Tech Mono',monospace; font-size:0.48rem; letter-spacing:0.3em; color:var(--red); text-transform:uppercase; display:none; max-width:300px; text-align:center; line-height:1.8; }
 
-  .login-tag {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.5em;
-    color: var(--gray-mid);
-    text-transform: uppercase;
-  }
+  /* ══ APP ══ */
+  #app { display:none; padding:28px 24px 80px; animation:fadeIn 0.5s ease both; }
+  #app.visible { display:block; }
 
-  .login-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: clamp(1.8rem, 4vw, 2.8rem);
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--white);
-    text-align: center;
-  }
+  .sheet { max-width:1400px; width:100%; margin:0 auto; display:grid; gap:2px; }
 
-  .login-rule {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 260px;
-  }
-  .login-rule::before, .login-rule::after {
-    content: ''; flex: 1; height: 1px;
-    background: var(--border);
-  }
-  .login-rule span {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    color: var(--gray-dark);
-    letter-spacing: 0.4em;
-  }
+  /* ══ CARD ══ */
+  .card { background:rgba(14,13,10,0.88); border:1px solid var(--border); padding:22px 28px; position:relative; animation:slideUp 0.5s ease both; }
+  .card+.card { border-top:none; }
+  .card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:linear-gradient(180deg,transparent,var(--gray-mid) 30%,var(--gray-mid) 70%,transparent); opacity:0; transition:opacity 0.3s; }
+  .card:hover::before { opacity:1; }
+  .card:nth-child(1){animation-delay:0.05s} .card:nth-child(2){animation-delay:0.1s}
+  .card:nth-child(3){animation-delay:0.15s} .card:nth-child(4){animation-delay:0.2s}
 
-  .login-sub {
-    font-family: 'Special Elite', serif;
-    font-size: 0.85rem;
-    color: var(--gray-mid);
-    text-align: center;
-    max-width: 300px;
-    line-height: 1.7;
-  }
+  .section-title { font-family:'Oswald',sans-serif; font-size:0.6rem; font-weight:500; letter-spacing:0.5em; text-transform:uppercase; color:var(--gray-mid); margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+  .section-title .num { color:var(--gray-dark); font-size:0.54rem; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 
-  .google-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border-strong);
-    color: var(--off-white);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    padding: 14px 28px;
-    cursor: pointer;
-    transition: all 0.25s;
-  }
-  .google-btn:hover {
-    background: rgba(255,255,255,0.07);
-    border-color: var(--off-white);
-    color: var(--white);
-  }
-  .google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field label { font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
+  .field input,.field textarea { background:transparent; border:none; border-bottom:1px solid var(--border-strong); color:var(--white); font-family:'Special Elite',serif; font-size:1rem; padding:6px 0; outline:none; transition:border-color 0.25s; width:100%; }
+  .field input::placeholder,.field textarea::placeholder { color:var(--gray-dark); font-size:0.85rem; }
+  .field input:focus,.field textarea:focus { border-bottom-color:var(--off-white); }
 
-  /* ═══ APP LAYOUT ═══ */
-  #appLayout {
-    display: none;
-    min-height: calc(100vh - var(--topbar-h));
-  }
-
-  #appLayout.visible {
-    display: flex;
-  }
-
-  /* ═══ SIDEBAR ═══ */
-  #sidebar {
-    width: var(--sidebar-w);
-    flex-shrink: 0;
-    background: rgba(10,9,8,0.9);
-    border-right: 1px solid var(--border);
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: var(--topbar-h);
-    height: calc(100vh - var(--topbar-h));
-    overflow-y: auto;
-  }
-
-  .sidebar-section {
-    padding: 0 16px;
-    margin-bottom: 6px;
-  }
-
-  .sidebar-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.48rem;
-    letter-spacing: 0.45em;
-    text-transform: uppercase;
-    color: var(--gray-dark);
-    margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sheet-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 10px;
-    margin-bottom: 14px;
-  }
-
-  .sheet-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 10px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.18s;
-    position: relative;
-  }
-
-  .sheet-item:hover { background: rgba(200,195,180,0.04); border-color: var(--border); }
-
-  .sheet-item.active {
-    background: rgba(200,195,180,0.07);
-    border-color: var(--border-strong);
-  }
-
-  .sheet-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 2px;
-    background: var(--gray-mid);
-  }
-
-  .sheet-item-name {
-    flex: 1;
-    font-family: 'Special Elite', serif;
-    font-size: 0.82rem;
-    color: var(--off-white);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .sheet-item.active .sheet-item-name { color: var(--white); }
-
-  .sheet-item-del {
-    background: transparent;
-    border: none;
-    color: var(--gray-dark);
-    cursor: pointer;
-    font-size: 0.6rem;
-    padding: 2px;
-    transition: color 0.2s;
-    flex-shrink: 0;
-    opacity: 0;
-  }
-
-  .sheet-item:hover .sheet-item-del { opacity: 1; }
-  .sheet-item-del:hover { color: var(--red); }
-
-  .sheet-loading {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    color: var(--gray-dark);
-    letter-spacing: 0.3em;
-    padding: 10px 10px;
-    text-transform: uppercase;
-  }
-
-  .new-sheet-btn {
-    margin: 0 10px;
-    background: transparent;
-    border: 1px dashed var(--border);
-    color: var(--gray-dark);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.48rem;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.25s;
-    width: calc(100% - 20px);
-  }
-
-  .new-sheet-btn:hover {
-    border-color: var(--gray-mid);
-    color: var(--gray-light);
-    background: rgba(200,195,180,0.03);
-  }
-
-  /* ═══ MAIN CONTENT ═══ */
-  #mainContent {
-    flex: 1;
-    min-width: 0;
-    padding: 24px 24px 60px;
-    overflow-y: auto;
-  }
-
-  /* Empty state */
-  #emptyState {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    gap: 20px;
-    animation: fadeIn 0.5s ease both;
-  }
-
-  .empty-icon {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 2rem;
-    color: var(--gray-dark);
-  }
-
-  .empty-text {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 0.4em;
-    color: var(--gray-dark);
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 2;
-  }
-
-  .empty-create-btn {
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    color: var(--gray-light);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    padding: 12px 24px;
-    cursor: pointer;
-    transition: all 0.25s;
-  }
-  .empty-create-btn:hover { border-color: var(--off-white); color: var(--white); }
-
-  /* ═══ SHEET ═══ */
-  .sheet {
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
-    display: grid;
-    gap: 2px;
-  }
-
-  /* ─── CARD ─── */
-  .card {
-    background: rgba(14,13,10,0.88);
-    border: 1px solid var(--border);
-    padding: 22px 28px;
-    position: relative;
-    animation: slideUp 0.5s ease both;
-  }
-
-  .card + .card { border-top: none; }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 2px;
-    background: linear-gradient(180deg, transparent, var(--gray-mid) 30%, var(--gray-mid) 70%, transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .card:hover::before { opacity: 1; }
-
-  /* ─── SECTION TITLE ─── */
-  .section-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.62rem;
-    font-weight: 500;
-    letter-spacing: 0.5em;
-    text-transform: uppercase;
-    color: var(--gray-mid);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-title .num { color: var(--gray-dark); font-size: 0.56rem; }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  /* ─── FIELDS ─── */
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--gray-mid);
-  }
-  .field input, .field textarea {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-strong);
-    color: var(--white);
-    font-family: 'Special Elite', serif;
-    font-size: 1rem;
-    padding: 6px 0;
-    outline: none;
-    transition: border-color 0.25s;
-    width: 100%;
-  }
-  .field input::placeholder, .field textarea::placeholder { color: var(--gray-dark); font-size: 0.85rem; }
-  .field input:focus, .field textarea:focus { border-bottom-color: var(--off-white); }
-
-  /* ─── IDENTITY ─── */
-  .identity-layout { display: grid; grid-template-columns: 150px 1fr; gap: 28px; }
-
-  .portrait-area {
-    border: 1px solid var(--border-strong);
-    background: rgba(0,0,0,0.4);
-    aspect-ratio: 3/4;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    cursor: pointer; position: relative; overflow: hidden;
-    transition: border-color 0.3s; min-height: 180px;
-  }
-  .portrait-area:hover { border-color: var(--gray-mid); }
+  /* identity */
+  .identity-layout { display:grid; grid-template-columns:150px 1fr; gap:28px; }
+  .portrait-area { border:1px solid var(--border-strong); background:rgba(0,0,0,0.4); aspect-ratio:3/4; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; position:relative; overflow:hidden; transition:border-color 0.3s; min-height:180px; }
+  .portrait-area:hover { border-color:var(--gray-mid); }
   .portrait-area img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; filter:contrast(1.1); }
-  .portrait-hint { font-family:'Share Tech Mono',monospace; font-size:0.48rem; letter-spacing:0.3em; color:var(--gray-dark); text-align:center; text-transform:uppercase; z-index:1; line-height:1.8; }
-  .portrait-cross { width:28px; height:28px; position:relative; margin-bottom:10px; opacity:0.25; }
-  .portrait-cross::before, .portrait-cross::after { content:''; position:absolute; background:var(--gray-light); }
+  .portrait-hint { font-family:'Share Tech Mono',monospace; font-size:0.46rem; letter-spacing:0.3em; color:var(--gray-dark); text-align:center; text-transform:uppercase; z-index:1; line-height:1.8; }
+  .portrait-cross { width:26px; height:26px; position:relative; margin-bottom:10px; opacity:0.2; }
+  .portrait-cross::before,.portrait-cross::after { content:''; position:absolute; background:var(--gray-light); }
   .portrait-cross::before { width:1px; height:100%; left:50%; top:0; }
   .portrait-cross::after { width:100%; height:1px; top:50%; left:0; }
-
   .identity-fields { display:flex; flex-direction:column; gap:18px; }
   .identity-row { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:20px; }
-
   .level-row { display:flex; gap:24px; align-items:flex-end; }
   .level-box { display:flex; flex-direction:column; align-items:center; gap:5px; flex-shrink:0; }
-  .level-box label { font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
+  .level-box label { font-family:'Share Tech Mono',monospace; font-size:0.48rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
   .level-input { background:transparent; border:1px solid var(--border-strong); color:var(--white); font-family:'Oswald',sans-serif; font-size:2.2rem; font-weight:700; text-align:center; width:72px; height:72px; outline:none; -moz-appearance:textfield; transition:border-color 0.25s; }
   .level-input:focus { border-color:var(--off-white); }
-  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
 
-  /* ─── ATTRIBUTES ─── */
-  .attributes-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:0; }
-  .attr-box { display:flex; flex-direction:column; align-items:center; gap:10px; padding:20px 10px; border:1px solid var(--border); background:rgba(0,0,0,0.2); position:relative; transition:background 0.3s; margin:0 -1px -1px 0; }
+  /* attrs */
+  .attributes-grid { display:grid; grid-template-columns:repeat(5,1fr); }
+  .attr-box { display:flex; flex-direction:column; align-items:center; gap:10px; padding:20px 10px; border:1px solid var(--border); background:rgba(0,0,0,0.2); transition:background 0.3s; margin:0 -1px -1px 0; }
   .attr-box:hover { background:rgba(200,195,180,0.04); z-index:2; border-color:var(--border-strong); }
-  .attr-abbr { font-family:'Oswald',sans-serif; font-size:0.6rem; font-weight:500; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
+  .attr-abbr { font-family:'Oswald',sans-serif; font-size:0.58rem; font-weight:500; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
   .attr-value { background:transparent; border:none; border-bottom:1px solid var(--border-strong); color:var(--white); font-family:'Oswald',sans-serif; font-size:2.6rem; font-weight:700; text-align:center; width:72px; outline:none; -moz-appearance:textfield; line-height:1; padding-bottom:5px; }
   .attr-value:focus { border-bottom-color:var(--white); }
   .attr-value::placeholder { color:var(--gray-dark); font-size:1.6rem; }
   .attr-name { font-family:'Special Elite',serif; font-size:0.75rem; color:var(--gray-mid); text-align:center; }
   .attr-mod { font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:var(--gray-light); min-height:18px; }
 
-  /* ─── DEFENSES ─── */
-  .defenses-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
+  /* defenses */
+  .defenses-grid { display:grid; grid-template-columns:repeat(3,1fr); }
   .defense-box { display:flex; flex-direction:column; align-items:center; gap:10px; padding:22px 16px; border:1px solid var(--border); margin:0 -1px -1px 0; transition:background 0.3s; }
   .defense-box:hover { background:rgba(200,195,180,0.03); }
-  .defense-label { font-family:'Share Tech Mono',monospace; font-size:0.52rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
+  .defense-label { font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--gray-mid); }
   .defense-value { background:transparent; border:1px solid rgba(192,57,43,0.3); color:#e0a0a0; font-family:'Oswald',sans-serif; font-size:2.4rem; font-weight:600; text-align:center; width:80px; height:80px; outline:none; -moz-appearance:textfield; transition:all 0.25s; }
   .defense-value:focus { border-color:rgba(192,57,43,0.7); color:#f0b0b0; }
   .hp-row { display:flex; align-items:center; gap:8px; }
   .hp-sep { color:var(--gray-dark); font-family:'Oswald',sans-serif; font-size:1.4rem; }
-  .hp-bar-wrap { width:100%; height:3px; background:rgba(192,57,43,0.15); margin-top:4px; overflow:hidden; }
-  .hp-bar { height:100%; background:linear-gradient(90deg,var(--red-dim),var(--red)); width:100%; transition:width 0.4s ease; }
+  .hp-bar-wrap { width:100%; height:3px; background:rgba(192,57,43,0.15); overflow:hidden; margin-top:4px; }
+  .hp-bar { height:100%; width:100%; transition:width 0.4s ease; }
 
-  /* ─── BODY LAYOUT ─── */
+  /* body */
   .body-layout { display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:2px; }
   .body-col { display:flex; flex-direction:column; gap:2px; }
 
-  /* ─── SKILLS ─── */
+  /* pericias */
   .pericia-item { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); transition:padding-left 0.15s; }
   .pericia-item:last-child { border-bottom:none; }
   .pericia-item:hover { padding-left:4px; }
@@ -578,736 +158,453 @@ window.dispatchEvent(new Event('fb-ready'));
   .pericia-name { flex:1; background:transparent; border:none; color:var(--off-white); font-family:'Special Elite',serif; font-size:0.92rem; outline:none; }
   .pericia-name::placeholder { color:var(--gray-dark); }
   .pericia-bonus { background:transparent; border:1px solid var(--border); color:var(--gray-light); font-family:'Share Tech Mono',monospace; font-size:0.75rem; text-align:center; width:40px; padding:3px; outline:none; }
-  .pericia-bonus:focus { border-color:var(--gray-mid); }
 
-  /* ─── EQUIPMENT ─── */
+  /* equip */
   .equip-item { display:grid; grid-template-columns:1fr 46px 22px; gap:12px; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); }
   .equip-name { background:transparent; border:none; border-bottom:1px solid transparent; color:var(--off-white); font-family:'Special Elite',serif; font-size:0.92rem; outline:none; padding:2px 0; width:100%; transition:all 0.2s; }
   .equip-name:focus { border-bottom-color:var(--border-strong); color:var(--white); }
   .equip-qty { background:transparent; border:1px solid var(--border); color:var(--gray-light); font-family:'Share Tech Mono',monospace; font-size:0.75rem; text-align:center; width:100%; padding:3px; outline:none; -moz-appearance:textfield; }
 
-  /* ─── ABILITIES ─── */
+  /* habilidades */
   .habilidade-item { display:grid; grid-template-columns:8px 1fr auto; gap:16px; align-items:start; padding:14px 0; border-bottom:1px solid var(--border); }
   .habilidade-item:last-child { border-bottom:none; }
-  .hab-tick { width:2px; height:100%; min-height:44px; background:var(--gray-dark); margin-top:4px; transition:background 0.2s; }
+  .hab-tick { width:2px; min-height:44px; background:var(--gray-dark); margin-top:4px; transition:background 0.2s; }
   .habilidade-item:hover .hab-tick { background:var(--gray-mid); }
   .hab-content { display:flex; flex-direction:column; gap:7px; }
-  .hab-name { background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--white); font-family:'Oswald',sans-serif; font-size:0.95rem; font-weight:500; letter-spacing:0.05em; padding:2px 0 5px; outline:none; width:100%; text-transform:uppercase; transition:border-color 0.2s; }
+  .hab-name { background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--white); font-family:'Oswald',sans-serif; font-size:0.95rem; font-weight:500; letter-spacing:0.05em; padding:2px 0 5px; outline:none; width:100%; text-transform:uppercase; }
   .hab-name:focus { border-bottom-color:var(--white); }
   .hab-name::placeholder { color:var(--gray-dark); font-weight:300; font-size:0.85rem; }
   .hab-desc { background:transparent; border:none; color:var(--gray-light); font-family:'Special Elite',serif; font-size:0.82rem; outline:none; resize:none; height:38px; width:100%; line-height:1.7; }
   .hab-desc::placeholder { color:var(--gray-dark); }
   .hab-meta { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
   .hab-type { background:transparent; border:1px solid var(--border); color:var(--gray-mid); font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.2em; padding:4px 10px; outline:none; cursor:pointer; }
-  .hab-type:focus { border-color:var(--gray-mid); }
 
-  /* ─── NOTES ─── */
+  /* notes */
   .notes-area { background:transparent; border:1px solid var(--border); color:var(--off-white); font-family:'Special Elite',serif; font-size:0.92rem; line-height:2; padding:14px; outline:none; resize:vertical; min-height:130px; width:100%; transition:border-color 0.25s; }
   .notes-area:focus { border-color:var(--border-strong); }
   .notes-area::placeholder { color:var(--gray-dark); }
 
-  /* ─── BUTTONS ─── */
-  .add-btn { background:transparent; border:1px dashed var(--border); color:var(--gray-dark); font-family:'Share Tech Mono',monospace; font-size:0.52rem; letter-spacing:0.4em; text-transform:uppercase; padding:10px 16px; cursor:pointer; width:100%; margin-top:14px; transition:all 0.25s; }
+  /* buttons */
+  .add-btn { background:transparent; border:1px dashed var(--border); color:var(--gray-dark); font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.4em; text-transform:uppercase; padding:10px 16px; cursor:pointer; width:100%; margin-top:14px; transition:all 0.25s; }
   .add-btn:hover { border-color:var(--gray-mid); color:var(--gray-light); background:rgba(200,195,180,0.03); }
   .del-btn { background:transparent; border:none; color:var(--gray-dark); cursor:pointer; font-size:0.68rem; transition:color 0.2s; padding:0; line-height:1; }
   .del-btn:hover { color:var(--red); }
 
-  /* ─── MODAL ─── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 4000;
-    animation: fadeIn 0.2s ease both;
-  }
+  /* toast */
+  #toast { position:fixed; bottom:24px; right:24px; background:rgba(14,13,10,0.96); border:1px solid var(--border-strong); color:var(--off-white); font-family:'Share Tech Mono',monospace; font-size:0.5rem; letter-spacing:0.3em; text-transform:uppercase; padding:10px 18px; z-index:5000; opacity:0; transform:translateY(8px); transition:all 0.3s; pointer-events:none; }
+  #toast.show { opacity:1; transform:translateY(0); }
 
-  .modal {
-    background: var(--black);
-    border: 1px solid var(--border-strong);
-    padding: 28px 32px;
-    min-width: 320px;
-    display: flex; flex-direction: column; gap: 18px;
-    animation: slideUp 0.25s ease both;
-  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-  .modal-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--gray-mid);
-  }
-
-  .modal-input {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-strong);
-    color: var(--white);
-    font-family: 'Special Elite', serif;
-    font-size: 1.1rem;
-    padding: 8px 0;
-    outline: none;
-    width: 100%;
-  }
-  .modal-input::placeholder { color: var(--gray-dark); }
-  .modal-input:focus { border-bottom-color: var(--off-white); }
-
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-
-  .modal-btn {
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    color: var(--gray-light);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    padding: 8px 18px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .modal-btn:hover { border-color: var(--off-white); color: var(--white); }
-  .modal-btn.primary { border-color: var(--gray-mid); color: var(--white); }
-  .modal-btn.primary:hover { background: rgba(200,195,180,0.1); }
-
-  /* ─── TOAST ─── */
-  #toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: rgba(14,13,10,0.95);
-    border: 1px solid var(--border-strong);
-    color: var(--off-white);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    padding: 10px 18px;
-    z-index: 5000;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    pointer-events: none;
-  }
-  #toast.show { opacity: 1; transform: translateY(0); }
-
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* ─── RESPONSIVE ─── */
-  @media (max-width: 900px) {
-    :root { --sidebar-w: 200px; }
-    .body-layout { grid-template-columns: 1fr 1fr; }
-    .body-col:last-child { grid-column: span 2; }
-  }
-  @media (max-width: 640px) {
-    :root { --sidebar-w: 0px; }
-    #sidebar { display: none; }
-    .identity-layout { grid-template-columns: 1fr; }
-    .identity-row { grid-template-columns: 1fr 1fr; }
-    .attributes-grid { grid-template-columns: repeat(3,1fr); }
-    .defenses-grid { grid-template-columns: 1fr 1fr; }
-    .body-layout { grid-template-columns: 1fr; }
-    .body-col:last-child { grid-column: span 1; }
-  }
+  @media(max-width:900px){ .body-layout{grid-template-columns:1fr 1fr} .body-col:last-child{grid-column:span 2} }
+  @media(max-width:620px){ .identity-layout{grid-template-columns:1fr} .identity-row{grid-template-columns:1fr 1fr} .attributes-grid{grid-template-columns:repeat(3,1fr)} .defenses-grid{grid-template-columns:1fr 1fr} .body-layout{grid-template-columns:1fr} .body-col:last-child{grid-column:span 1} }
 </style>
 </head>
 <body>
 
-<!-- ═══ TOP BAR ═══ -->
+<!-- TOPBAR -->
 <div id="topbar">
-  <div class="topbar-left">
-    <span class="topbar-logo">./ficha</span>
-    <div class="topbar-sep"></div>
-    <span class="topbar-sheet-name" id="topSheetName">—</span>
+  <div class="tb-left">
+    <span class="tb-logo">./ficha</span>
+    <div class="tb-sep"></div>
+    <span id="saveStatus">● aguardando</span>
   </div>
-  <span id="saveStatus">●  aguardando</span>
-  <div class="topbar-right">
-    <img id="userAvatar" alt="avatar">
+  <div class="tb-right">
+    <img id="userAvatar" alt="">
     <span id="userName"></span>
-    <button class="topbar-btn" id="loginBtn" onclick="doLogin()">ENTRAR COM GOOGLE</button>
-    <button class="topbar-btn danger" id="logoutBtn" onclick="doLogout()" style="display:none">SAIR</button>
+    <button class="tb-btn" id="loginBtn" onclick="doLogin()">ENTRAR COM GOOGLE</button>
+    <button class="tb-btn danger" id="logoutBtn" onclick="doLogout()" style="display:none">SAIR</button>
   </div>
 </div>
 
-<!-- ═══ LOGIN SCREEN ═══ -->
+<!-- LOGIN -->
 <div id="loginScreen">
-  <div class="login-tag">./sobrevivente/ficha</div>
+  <div class="login-eyebrow">./sobrevivente/ficha</div>
   <div class="login-title">Ficha de<br>Personagem</div>
   <div class="login-rule"><span>◆</span></div>
-  <div class="login-sub">Faça login para salvar e acessar suas fichas em qualquer dispositivo.</div>
+  <div class="login-sub">Entre com sua conta para salvar e carregar sua ficha automaticamente.</div>
   <button class="google-btn" onclick="doLogin()">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
+    <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
     CONTINUAR COM GOOGLE
   </button>
+  <div id="loginError"></div>
 </div>
 
-<!-- ═══ APP ═══ -->
-<div id="appLayout">
+<!-- APP -->
+<div id="app">
+<div class="sheet">
 
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Fichas</div>
+  <!-- 01 IDENTIDADE -->
+  <div class="card">
+    <div class="section-title"><span class="num">01 /</span> Identidade</div>
+    <div class="identity-layout">
+      <div class="portrait-area" id="portraitArea" onclick="document.getElementById('portraitInput').click()">
+        <div class="portrait-cross"></div>
+        <div class="portrait-hint">CLIQUE PARA<br>INSERIR RETRATO</div>
+      </div>
+      <input type="file" id="portraitInput" accept="image/*" style="display:none" onchange="loadPortrait(event)">
+      <div class="identity-fields">
+        <div class="identity-row">
+          <div class="field"><label>Nome</label><input type="text" id="f_nome" placeholder="Identificação" oninput="scheduleSave()"></div>
+          <div class="field"><label>Classe</label><input type="text" id="f_classe" placeholder="Arquétipo" oninput="scheduleSave()"></div>
+          <div class="field"><label>Subclasse</label><input type="text" id="f_subclasse" placeholder="Especialização" oninput="scheduleSave()"></div>
+          <div class="field"><label>Jogador</label><input type="text" id="f_jogador" placeholder="—" oninput="scheduleSave()"></div>
+        </div>
+        <div class="level-row">
+          <div class="level-box">
+            <label>Nível</label>
+            <input type="number" class="level-input" id="f_nivel" min="1" max="20" placeholder="—" oninput="scheduleSave()">
+          </div>
+          <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div class="field"><label>Raça / Origem</label><input type="text" id="f_raca" placeholder="Espécie…" oninput="scheduleSave()"></div>
+            <div class="field"><label>Alinhamento</label><input type="text" id="f_alinhamento" placeholder="Caótico…" oninput="scheduleSave()"></div>
+          </div>
+          <div class="field" style="flex:1.5">
+            <label>Aparência / Notas rápidas</label>
+            <textarea id="f_aparencia" placeholder="Traços físicos…" style="min-height:58px;resize:none;" oninput="scheduleSave()"></textarea>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="sheet-list" id="sheetList">
-      <div class="sheet-loading">carregando…</div>
-    </div>
-    <button class="new-sheet-btn" onclick="promptNewSheet()">+ NOVA FICHA</button>
   </div>
 
-  <!-- MAIN -->
-  <div id="mainContent">
-
-    <!-- EMPTY STATE -->
-    <div id="emptyState">
-      <div class="empty-icon">◻</div>
-      <div class="empty-text">Nenhuma ficha selecionada<br>Crie uma nova para começar</div>
-      <button class="empty-create-btn" onclick="promptNewSheet()">+ CRIAR PRIMEIRA FICHA</button>
+  <!-- 02 ATRIBUTOS -->
+  <div class="card">
+    <div class="section-title"><span class="num">02 /</span> Atributos</div>
+    <div class="attributes-grid">
+      <div class="attr-box"><div class="attr-abbr">POD</div><input type="number" class="attr-value" id="f_pod" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Poder</div><div class="attr-mod">—</div></div>
+      <div class="attr-box"><div class="attr-abbr">PRE</div><input type="number" class="attr-value" id="f_pre" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Precisão</div><div class="attr-mod">—</div></div>
+      <div class="attr-box"><div class="attr-abbr">VIG</div><input type="number" class="attr-value" id="f_vig" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Vigor</div><div class="attr-mod">—</div></div>
+      <div class="attr-box"><div class="attr-abbr">RAC</div><input type="number" class="attr-value" id="f_rac" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Raciocínio</div><div class="attr-mod">—</div></div>
+      <div class="attr-box"><div class="attr-abbr">CAR</div><input type="number" class="attr-value" id="f_car" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Carisma</div><div class="attr-mod">—</div></div>
     </div>
+  </div>
 
-    <!-- SHEET FORM (hidden until a sheet is selected) -->
-    <div id="sheetForm" style="display:none">
-      <div class="sheet" id="sheetContainer">
-
-        <!-- 01 IDENTIDADE -->
-        <div class="card">
-          <div class="section-title"><span class="num">01 /</span> Identidade</div>
-          <div class="identity-layout">
-            <div class="portrait-area" id="portraitArea" onclick="document.getElementById('portraitInput').click()">
-              <div class="portrait-cross"></div>
-              <div class="portrait-hint">CLIQUE PARA<br>INSERIR RETRATO</div>
-            </div>
-            <input type="file" id="portraitInput" accept="image/*" style="display:none" onchange="loadPortrait(event)">
-            <div class="identity-fields">
-              <div class="identity-row">
-                <div class="field"><label>Nome</label><input type="text" id="f_nome" placeholder="Identificação" oninput="scheduleSave()"></div>
-                <div class="field"><label>Classe</label><input type="text" id="f_classe" placeholder="Arquétipo" oninput="scheduleSave()"></div>
-                <div class="field"><label>Subclasse</label><input type="text" id="f_subclasse" placeholder="Especialização" oninput="scheduleSave()"></div>
-                <div class="field"><label>Jogador</label><input type="text" id="f_jogador" placeholder="—" oninput="scheduleSave()"></div>
-              </div>
-              <div class="level-row">
-                <div class="level-box">
-                  <label>Nível</label>
-                  <input type="number" class="level-input" id="f_nivel" min="1" max="20" placeholder="—" oninput="scheduleSave()">
-                </div>
-                <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                  <div class="field"><label>Raça / Origem</label><input type="text" id="f_raca" placeholder="Espécie…" oninput="scheduleSave()"></div>
-                  <div class="field"><label>Alinhamento</label><input type="text" id="f_alinhamento" placeholder="Caótico…" oninput="scheduleSave()"></div>
-                </div>
-                <div class="field" style="flex:1.5">
-                  <label>Aparência / Notas rápidas</label>
-                  <textarea id="f_aparencia" placeholder="Traços físicos…" style="min-height:58px;resize:none;" oninput="scheduleSave()"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
+  <!-- 03 DEFESAS -->
+  <div class="card">
+    <div class="section-title"><span class="num">03 /</span> Defesas & Vitalidade</div>
+    <div class="defenses-grid">
+      <div class="defense-box">
+        <div class="defense-label">Pontos de Vida</div>
+        <div class="hp-row">
+          <input type="number" class="defense-value" id="hpAtual" placeholder="0" oninput="updateHpBar();scheduleSave()">
+          <span class="hp-sep">/</span>
+          <input type="number" class="defense-value" id="hpMax" placeholder="0" oninput="updateHpBar();scheduleSave()">
         </div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="hpBar"></div></div>
+        <div class="defense-label" style="margin-top:2px">Atual / Máximo</div>
+      </div>
+      <div class="defense-box">
+        <div class="defense-label">Defesa</div>
+        <input type="number" class="defense-value" id="f_defesa" placeholder="10" oninput="scheduleSave()">
+        <div class="defense-label">Classe de Armadura</div>
+      </div>
+      <div class="defense-box">
+        <div class="defense-label">Propósito</div>
+        <input type="number" class="defense-value" id="f_proposito" placeholder="—" oninput="scheduleSave()">
+        <div class="defense-label">Determinação</div>
+      </div>
+    </div>
+  </div>
 
-        <!-- 02 ATRIBUTOS -->
-        <div class="card">
-          <div class="section-title"><span class="num">02 /</span> Atributos</div>
-          <div class="attributes-grid">
-            <div class="attr-box"><div class="attr-abbr">POD</div><input type="number" class="attr-value" id="f_pod" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Poder</div><div class="attr-mod">—</div></div>
-            <div class="attr-box"><div class="attr-abbr">PRE</div><input type="number" class="attr-value" id="f_pre" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Precisão</div><div class="attr-mod">—</div></div>
-            <div class="attr-box"><div class="attr-abbr">VIG</div><input type="number" class="attr-value" id="f_vig" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Vigor</div><div class="attr-mod">—</div></div>
-            <div class="attr-box"><div class="attr-abbr">RAC</div><input type="number" class="attr-value" id="f_rac" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Raciocínio</div><div class="attr-mod">—</div></div>
-            <div class="attr-box"><div class="attr-abbr">CAR</div><input type="number" class="attr-value" id="f_car" min="1" max="30" placeholder="—" oninput="updateMod(this);scheduleSave()"><div class="attr-name">Carisma</div><div class="attr-mod">—</div></div>
-          </div>
-        </div>
+  <!-- BODY -->
+  <div class="body-layout">
+    <div class="body-col">
+      <div class="card" style="flex:1">
+        <div class="section-title"><span class="num">04 /</span> Perícias</div>
+        <div id="periciasContainer"></div>
+        <button class="add-btn" onclick="addPericia()">+ ADICIONAR PERÍCIA</button>
+      </div>
+    </div>
+    <div class="body-col">
+      <div class="card">
+        <div class="section-title"><span class="num">05 /</span> Anotações</div>
+        <textarea class="notes-area" id="f_notas" placeholder="Notas, segredos, missões ativas…" style="min-height:160px;" oninput="scheduleSave()"></textarea>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="section-title"><span class="num">06 /</span> Inventário</div>
+        <div id="equipContainer"></div>
+        <button class="add-btn" onclick="addEquip()">+ ADICIONAR ITEM</button>
+      </div>
+    </div>
+    <div class="body-col">
+      <div class="card" style="flex:1">
+        <div class="section-title"><span class="num">07 /</span> Habilidades & Poderes</div>
+        <div id="habilidadesContainer"></div>
+        <button class="add-btn" onclick="addHabilidade()">+ ADICIONAR HABILIDADE</button>
+      </div>
+    </div>
+  </div>
 
-        <!-- 03 DEFESAS -->
-        <div class="card">
-          <div class="section-title"><span class="num">03 /</span> Defesas & Vitalidade</div>
-          <div class="defenses-grid">
-            <div class="defense-box">
-              <div class="defense-label">Pontos de Vida</div>
-              <div class="hp-row">
-                <input type="number" class="defense-value" id="hpAtual" placeholder="0" title="Atual" oninput="updateHpBar();scheduleSave()">
-                <span class="hp-sep">/</span>
-                <input type="number" class="defense-value" id="hpMax" placeholder="0" title="Máximo" oninput="updateHpBar();scheduleSave()">
-              </div>
-              <div class="hp-bar-wrap"><div class="hp-bar" id="hpBar"></div></div>
-              <div class="defense-label" style="margin-top:2px">Atual / Máximo</div>
-            </div>
-            <div class="defense-box">
-              <div class="defense-label">Defesa</div>
-              <input type="number" class="defense-value" id="f_defesa" placeholder="10" oninput="scheduleSave()">
-              <div class="defense-label">Classe de Armadura</div>
-            </div>
-            <div class="defense-box">
-              <div class="defense-label">Propósito</div>
-              <input type="number" class="defense-value" id="f_proposito" placeholder="—" oninput="scheduleSave()">
-              <div class="defense-label">Determinação</div>
-            </div>
-          </div>
-        </div>
+</div>
+</div>
 
-        <!-- 04/05/06/07 BODY -->
-        <div class="body-layout">
-          <div class="body-col">
-            <div class="card" style="flex:1">
-              <div class="section-title"><span class="num">04 /</span> Perícias</div>
-              <div id="periciasContainer"></div>
-              <button class="add-btn" onclick="addPericia()">+ ADICIONAR PERÍCIA</button>
-            </div>
-          </div>
-          <div class="body-col">
-            <div class="card">
-              <div class="section-title"><span class="num">05 /</span> Anotações</div>
-              <textarea class="notes-area" id="f_notas" placeholder="Notas, segredos, missões ativas…" style="min-height:160px;" oninput="scheduleSave()"></textarea>
-            </div>
-            <div class="card" style="flex:1">
-              <div class="section-title"><span class="num">06 /</span> Inventário</div>
-              <div id="equipContainer"></div>
-              <button class="add-btn" onclick="addEquip()">+ ADICIONAR ITEM</button>
-            </div>
-          </div>
-          <div class="body-col">
-            <div class="card" style="flex:1">
-              <div class="section-title"><span class="num">07 /</span> Habilidades & Poderes</div>
-              <div id="habilidadesContainer"></div>
-              <button class="add-btn" onclick="addHabilidade()">+ ADICIONAR HABILIDADE</button>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- .sheet -->
-    </div><!-- #sheetForm -->
-  </div><!-- #mainContent -->
-</div><!-- #appLayout -->
-
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════════
-     MAIN SCRIPT
-     ═══════════════════════════════════════════════════ -->
-<script>
-// ── state ──────────────────────────────────────────────
-let currentUser   = null;
-let currentSheetId = null;
-let saveTimer     = null;
-let sheets        = {};   // id → {name, ...data}
+<!-- FIREBASE MODULE -->
+<script type="module">
+  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+                              from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc }
+                              from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ── wait for firebase module ───────────────────────────
-window.addEventListener('fb-ready', () => {
-  const { auth, onAuthStateChanged } = window._fb;
+  const cfg = {
+    apiKey:            "AIzaSyA8DI8tyA_ZblKpj-UmMIq1PVYzkJ2aNzQ",
+    authDomain:        "o-maquinario-do-fim.firebaseapp.com",
+    projectId:         "o-maquinario-do-fim",
+    storageBucket:     "o-maquinario-do-fim.firebasestorage.app",
+    messagingSenderId: "190938684149",
+    appId:             "1:190938684149:web:0f988af35ec4a5213f03bc",
+    measurementId:     "G-VCDX9H4M97"
+  };
+
+  const fbApp  = initializeApp(cfg);
+  const auth   = getAuth(fbApp);
+  const db     = getFirestore(fbApp);
+  const prov   = new GoogleAuthProvider();
+
+  // expose to regular script
+  window._fb = { auth, db, prov, signInWithPopup, signOut, doc, getDoc, setDoc };
 
   onAuthStateChanged(auth, user => {
+    window._user = user || null;
     if (user) {
-      currentUser = user;
       showApp(user);
-      loadSheetList();
+      loadSheet(user.uid);
     } else {
-      currentUser = null;
       showLogin();
     }
   });
-});
+</script>
 
-// ── auth ───────────────────────────────────────────────
-async function doLogin() {
-  const { auth, GoogleAuthProvider, signInWithPopup } = window._fb;
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch(e) { showToast('Erro ao entrar: ' + e.message); }
-}
+<!-- APP LOGIC -->
+<script>
+  let saveTimer = null;
 
-async function doLogout() {
-  if (!confirm('Sair da conta?')) return;
-  const { auth, signOut } = window._fb;
-  await signOut(auth);
-}
-
-// ── UI show/hide ───────────────────────────────────────
-function showLogin() {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appLayout').classList.remove('visible');
-  document.getElementById('loginBtn').style.display = '';
-  document.getElementById('logoutBtn').style.display = 'none';
-  document.getElementById('userAvatar').style.display = 'none';
-  document.getElementById('userName').style.display = 'none';
-}
-
-function showApp(user) {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('appLayout').classList.add('visible');
-  document.getElementById('loginBtn').style.display = 'none';
-  document.getElementById('logoutBtn').style.display = '';
-  const av = document.getElementById('userAvatar');
-  av.src = user.photoURL || '';
-  av.style.display = user.photoURL ? 'block' : 'none';
-  const un = document.getElementById('userName');
-  un.textContent = user.displayName || user.email;
-  un.style.display = '';
-}
-
-// ── sheet list ─────────────────────────────────────────
-async function loadSheetList() {
-  const { db, collection, getDocs } = window._fb;
-  const listEl = document.getElementById('sheetList');
-  listEl.innerHTML = '<div class="sheet-loading">carregando…</div>';
-
-  try {
-    const snap = await getDocs(collection(db, 'users', currentUser.uid, 'fichas'));
-    sheets = {};
-    snap.forEach(d => { sheets[d.id] = d.data(); });
-    renderSheetList();
-  } catch(e) {
-    listEl.innerHTML = '<div class="sheet-loading">erro ao carregar</div>';
-  }
-}
-
-function renderSheetList() {
-  const listEl = document.getElementById('sheetList');
-  listEl.innerHTML = '';
-  const ids = Object.keys(sheets);
-
-  if (!ids.length) {
-    listEl.innerHTML = '<div class="sheet-loading">nenhuma ficha</div>';
-    return;
-  }
-
-  ids.forEach(id => {
-    const s = sheets[id];
-    const div = document.createElement('div');
-    div.className = 'sheet-item' + (id === currentSheetId ? ' active' : '');
-    div.dataset.id = id;
-    div.innerHTML = `
-      <span class="sheet-item-name">${s.nome || '(sem nome)'}</span>
-      <button class="sheet-item-del" title="Deletar" onclick="deleteSheet('${id}',event)">✕</button>
-    `;
-    div.addEventListener('click', () => selectSheet(id));
-    listEl.appendChild(div);
-  });
-}
-
-// ── select / load sheet ────────────────────────────────
-async function selectSheet(id) {
-  currentSheetId = id;
-  renderSheetList();
-
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('sheetForm').style.display = 'block';
-
-  const { db, doc, getDoc } = window._fb;
-  setSaveStatus('saving');
-  try {
-    const snap = await getDoc(doc(db, 'users', currentUser.uid, 'fichas', id));
-    if (snap.exists()) loadFormData(snap.data());
-    setSaveStatus('saved');
-  } catch(e) {
-    setSaveStatus('error');
-    showToast('Erro ao carregar ficha');
-  }
-}
-
-// ── new sheet ──────────────────────────────────────────
-function promptNewSheet() {
-  showModal('Nova Ficha', 'Nome do personagem…', async (name) => {
-    if (!name.trim()) return;
-    const { db, doc, setDoc, serverTimestamp } = window._fb;
-    const id = 'ficha_' + Date.now();
-    const data = { nome: name.trim(), criadoEm: serverTimestamp() };
-    await setDoc(doc(db, 'users', currentUser.uid, 'fichas', id), data);
-    sheets[id] = data;
-    renderSheetList();
-    selectSheet(id);
-    showToast('Ficha criada');
-  });
-}
-
-// ── delete sheet ───────────────────────────────────────
-async function deleteSheet(id, e) {
-  e.stopPropagation();
-  const name = sheets[id]?.nome || 'esta ficha';
-  if (!confirm(`Deletar "${name}"? Esta ação não pode ser desfeita.`)) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    await deleteDoc(doc(db, 'users', currentUser.uid, 'fichas', id));
-    delete sheets[id];
-    if (currentSheetId === id) {
-      currentSheetId = null;
-      document.getElementById('sheetForm').style.display = 'none';
-      document.getElementById('emptyState').style.display = 'flex';
-      document.getElementById('topSheetName').textContent = '—';
+  /* auth */
+  async function doLogin() {
+    try {
+      const { auth, prov, signInWithPopup } = window._fb;
+      await signInWithPopup(auth, prov);
+    } catch(e) {
+      const el = document.getElementById('loginError');
+      el.style.display = 'block';
+      el.textContent = 'ERRO: ' + e.code;
     }
-    renderSheetList();
-    showToast('Ficha deletada');
-  } catch(e) { showToast('Erro ao deletar'); }
-}
+  }
 
-// ── save / load form ───────────────────────────────────
-function scheduleSave() {
-  setSaveStatus('saving');
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveCurrentSheet, 1200);
-}
+  async function doLogout() {
+    if (!confirm('Sair da conta?')) return;
+    await window._fb.signOut(window._fb.auth);
+  }
 
-async function saveCurrentSheet() {
-  if (!currentSheetId || !currentUser) return;
-  const { db, doc, setDoc, serverTimestamp } = window._fb;
-  const data = collectFormData();
-  try {
-    await setDoc(doc(db, 'users', currentUser.uid, 'fichas', currentSheetId), {
-      ...data, atualizadoEm: serverTimestamp()
-    });
-    sheets[currentSheetId] = data;
-    // update sidebar name
-    if (data.nome) {
-      const el = document.querySelector(`.sheet-item[data-id="${currentSheetId}"] .sheet-item-name`);
-      if (el) el.textContent = data.nome || '(sem nome)';
-      document.getElementById('topSheetName').textContent = data.nome;
+  /* show/hide */
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('loginBtn').style.display = '';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('userAvatar').style.display = 'none';
+    document.getElementById('userName').style.display = 'none';
+  }
+
+  function showApp(user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('loginBtn').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = '';
+    const av = document.getElementById('userAvatar');
+    if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
+    const un = document.getElementById('userName');
+    un.textContent = user.displayName || user.email;
+    un.style.display = '';
+  }
+
+  /* load */
+  async function loadSheet(uid) {
+    setSaveStatus('saving');
+    try {
+      const { db, doc, getDoc } = window._fb;
+      const snap = await getDoc(doc(db, 'fichas', uid));
+      if (snap.exists()) fillForm(snap.data());
+      setSaveStatus('saved');
+    } catch(e) {
+      setSaveStatus('error');
+      showToast('Erro ao carregar: ' + e.code);
     }
-    setSaveStatus('saved');
-  } catch(e) {
-    setSaveStatus('error');
-  }
-}
-
-function collectFormData() {
-  const gv = id => { const el = document.getElementById(id); return el ? el.value : ''; };
-
-  // perícias
-  const pericias = [];
-  document.querySelectorAll('#periciasContainer .pericia-item').forEach(item => {
-    pericias.push({
-      check: item.querySelector('.pericia-check')?.checked || false,
-      nome:  item.querySelector('.pericia-name')?.value || '',
-      bonus: item.querySelector('.pericia-bonus')?.value || ''
-    });
-  });
-
-  // equip
-  const equip = [];
-  document.querySelectorAll('#equipContainer .equip-item').forEach(item => {
-    equip.push({
-      nome: item.querySelector('.equip-name')?.value || '',
-      qty:  item.querySelector('.equip-qty')?.value || ''
-    });
-  });
-
-  // habilidades
-  const habilidades = [];
-  document.querySelectorAll('#habilidadesContainer .habilidade-item').forEach(item => {
-    habilidades.push({
-      nome: item.querySelector('.hab-name')?.value || '',
-      desc: item.querySelector('.hab-desc')?.value || '',
-      tipo: item.querySelector('.hab-type')?.value || 'PASSIVA'
-    });
-  });
-
-  // portrait
-  const portraitImg = document.querySelector('#portraitArea img');
-  const portrait = portraitImg ? portraitImg.src : '';
-
-  return {
-    nome:        gv('f_nome'),
-    classe:      gv('f_classe'),
-    subclasse:   gv('f_subclasse'),
-    jogador:     gv('f_jogador'),
-    nivel:       gv('f_nivel'),
-    raca:        gv('f_raca'),
-    alinhamento: gv('f_alinhamento'),
-    aparencia:   gv('f_aparencia'),
-    pod: gv('f_pod'), pre: gv('f_pre'), vig: gv('f_vig'),
-    rac: gv('f_rac'), car: gv('f_car'),
-    hpAtual:  gv('hpAtual'),
-    hpMax:    gv('hpMax'),
-    defesa:   gv('f_defesa'),
-    proposito:gv('f_proposito'),
-    notas:    gv('f_notas'),
-    pericias, equip, habilidades, portrait
-  };
-}
-
-function loadFormData(data) {
-  const sv = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-
-  sv('f_nome', data.nome);        sv('f_classe', data.classe);
-  sv('f_subclasse', data.subclasse); sv('f_jogador', data.jogador);
-  sv('f_nivel', data.nivel);      sv('f_raca', data.raca);
-  sv('f_alinhamento', data.alinhamento); sv('f_aparencia', data.aparencia);
-  sv('f_pod', data.pod); sv('f_pre', data.pre); sv('f_vig', data.vig);
-  sv('f_rac', data.rac); sv('f_car', data.car);
-  sv('hpAtual', data.hpAtual);    sv('hpMax', data.hpMax);
-  sv('f_defesa', data.defesa);    sv('f_proposito', data.proposito);
-  sv('f_notas', data.notas);
-
-  // recalc mods
-  document.querySelectorAll('.attr-value').forEach(el => { if (el.value) updateMod(el); });
-  updateHpBar();
-
-  // portrait
-  const area = document.getElementById('portraitArea');
-  const cross = area.querySelector('.portrait-cross');
-  const hint  = area.querySelector('.portrait-hint');
-  let img = area.querySelector('img');
-  if (data.portrait) {
-    cross.style.display = 'none'; hint.style.display = 'none';
-    if (!img) { img = document.createElement('img'); area.appendChild(img); }
-    img.src = data.portrait;
-  } else {
-    cross.style.display = ''; hint.style.display = '';
-    if (img) img.remove();
   }
 
-  // lists
-  document.getElementById('periciasContainer').innerHTML = '';
-  (data.pericias || []).forEach(p => addPericia(p.nome, p.bonus, p.check));
-  document.getElementById('equipContainer').innerHTML = '';
-  (data.equip || []).forEach(e => addEquip(e.nome, e.qty));
-  document.getElementById('habilidadesContainer').innerHTML = '';
-  (data.habilidades || []).forEach(h => addHabilidade(h.nome, h.desc, h.tipo));
+  /* save */
+  function scheduleSave() {
+    setSaveStatus('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveSheet, 1400);
+  }
 
-  document.getElementById('topSheetName').textContent = data.nome || '(sem nome)';
-}
+  async function saveSheet() {
+    if (!window._user) return;
+    try {
+      const { db, doc, setDoc } = window._fb;
+      await setDoc(doc(db, 'fichas', window._user.uid), collectForm());
+      setSaveStatus('saved');
+    } catch(e) {
+      setSaveStatus('error');
+      showToast('Erro ao salvar: ' + e.code);
+    }
+  }
 
-// ── save status indicator ──────────────────────────────
-function setSaveStatus(state) {
-  const el = document.getElementById('saveStatus');
-  el.className = state;
-  el.textContent = state === 'saving' ? '↑  salvando…'
-                 : state === 'saved'  ? '✓  salvo'
-                 : state === 'error'  ? '✕  erro ao salvar'
-                 : '●  aguardando';
-}
+  /* collect */
+  function collectForm() {
+    const g = id => { const el = document.getElementById(id); return el ? el.value : ''; };
 
-// ── portrait ───────────────────────────────────────────
-function loadPortrait(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+    const pericias = [];
+    document.querySelectorAll('#periciasContainer .pericia-item').forEach(r => {
+      pericias.push({ check: r.querySelector('.pericia-check').checked, nome: r.querySelector('.pericia-name').value, bonus: r.querySelector('.pericia-bonus').value });
+    });
+    const equip = [];
+    document.querySelectorAll('#equipContainer .equip-item').forEach(r => {
+      equip.push({ nome: r.querySelector('.equip-name').value, qty: r.querySelector('.equip-qty').value });
+    });
+    const habs = [];
+    document.querySelectorAll('#habilidadesContainer .habilidade-item').forEach(r => {
+      habs.push({ nome: r.querySelector('.hab-name').value, desc: r.querySelector('.hab-desc').value, tipo: r.querySelector('.hab-type').value });
+    });
+
+    const img = document.querySelector('#portraitArea img');
+    return {
+      nome:g('f_nome'), classe:g('f_classe'), subclasse:g('f_subclasse'), jogador:g('f_jogador'),
+      nivel:g('f_nivel'), raca:g('f_raca'), alinhamento:g('f_alinhamento'), aparencia:g('f_aparencia'),
+      pod:g('f_pod'), pre:g('f_pre'), vig:g('f_vig'), rac:g('f_rac'), car:g('f_car'),
+      hpAtual:g('hpAtual'), hpMax:g('hpMax'), defesa:g('f_defesa'), proposito:g('f_proposito'),
+      notas:g('f_notas'), pericias, equip, habs,
+      portrait: img ? img.src : ''
+    };
+  }
+
+  /* fill */
+  function fillForm(d) {
+    const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v||''; };
+    s('f_nome',d.nome); s('f_classe',d.classe); s('f_subclasse',d.subclasse); s('f_jogador',d.jogador);
+    s('f_nivel',d.nivel); s('f_raca',d.raca); s('f_alinhamento',d.alinhamento); s('f_aparencia',d.aparencia);
+    s('f_pod',d.pod); s('f_pre',d.pre); s('f_vig',d.vig); s('f_rac',d.rac); s('f_car',d.car);
+    s('hpAtual',d.hpAtual); s('hpMax',d.hpMax); s('f_defesa',d.defesa); s('f_proposito',d.proposito);
+    s('f_notas',d.notas);
+
+    document.querySelectorAll('.attr-value').forEach(el => { if(el.value) updateMod(el); });
+    updateHpBar();
+
     const area = document.getElementById('portraitArea');
-    area.querySelector('.portrait-cross').style.display = 'none';
-    area.querySelector('.portrait-hint').style.display = 'none';
+    const cross = area.querySelector('.portrait-cross');
+    const hint  = area.querySelector('.portrait-hint');
     let img = area.querySelector('img');
-    if (!img) { img = document.createElement('img'); area.appendChild(img); }
-    img.src = ev.target.result;
-    scheduleSave();
-  };
-  reader.readAsDataURL(file);
-}
+    if (d.portrait) {
+      cross.style.display='none'; hint.style.display='none';
+      if(!img){ img=document.createElement('img'); area.appendChild(img); }
+      img.src = d.portrait;
+    } else {
+      cross.style.display=''; hint.style.display='';
+      if(img) img.remove();
+    }
 
-// ── attribute modifier ─────────────────────────────────
-function updateMod(input) {
-  const val = parseInt(input.value);
-  const modEl = input.closest('.attr-box').querySelector('.attr-mod');
-  if (isNaN(val)) { modEl.textContent = '—'; modEl.style.color = ''; return; }
-  const mod = Math.floor((val - 10) / 2);
-  modEl.textContent = (mod >= 0 ? '+' : '') + mod;
-  modEl.style.color = mod > 0 ? 'var(--off-white)' : mod < 0 ? '#e0a0a0' : 'var(--gray-mid)';
-}
+    document.getElementById('periciasContainer').innerHTML='';
+    (d.pericias||[]).forEach(p => addPericia(p.nome, p.bonus, p.check));
+    document.getElementById('equipContainer').innerHTML='';
+    (d.equip||[]).forEach(e => addEquip(e.nome, e.qty));
+    document.getElementById('habilidadesContainer').innerHTML='';
+    (d.habs||[]).forEach(h => addHabilidade(h.nome, h.desc, h.tipo));
+  }
 
-// ── hp bar ─────────────────────────────────────────────
-function updateHpBar() {
-  const atual = parseFloat(document.getElementById('hpAtual').value) || 0;
-  const max   = parseFloat(document.getElementById('hpMax').value) || 0;
-  const bar   = document.getElementById('hpBar');
-  if (max <= 0) { bar.style.width = '100%'; return; }
-  const pct = Math.min(100, Math.max(0, (atual / max) * 100));
-  bar.style.width = pct + '%';
-  bar.style.background = pct > 50
-    ? 'linear-gradient(90deg,#7a2020,#c0392b)'
-    : pct > 25 ? 'linear-gradient(90deg,#7a2020,#e04020)'
-    : 'linear-gradient(90deg,#5a1010,#ff2000)';
-}
+  /* portrait */
+  function loadPortrait(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const area = document.getElementById('portraitArea');
+      area.querySelector('.portrait-cross').style.display='none';
+      area.querySelector('.portrait-hint').style.display='none';
+      let img = area.querySelector('img');
+      if(!img){ img=document.createElement('img'); area.appendChild(img); }
+      img.src = ev.target.result;
+      scheduleSave();
+    };
+    reader.readAsDataURL(file);
+  }
 
-// ── dynamic rows ───────────────────────────────────────
-function addPericia(nome = '', bonus = '', checked = false) {
-  const c = document.getElementById('periciasContainer');
-  const d = document.createElement('div');
-  d.className = 'pericia-item';
-  d.innerHTML = `
-    <input type="checkbox" class="pericia-check" ${checked ? 'checked' : ''} onchange="scheduleSave()">
-    <input type="text" class="pericia-name" value="${escHtml(nome)}" placeholder="Perícia…" oninput="scheduleSave()">
-    <input type="text" class="pericia-bonus" value="${escHtml(bonus)}" placeholder="+0" oninput="scheduleSave()">
-    <button class="del-btn" onclick="this.closest('.pericia-item').remove();scheduleSave()">✕</button>
-  `;
-  c.appendChild(d);
-}
+  /* mod */
+  function updateMod(input) {
+    const val = parseInt(input.value);
+    const m = input.closest('.attr-box').querySelector('.attr-mod');
+    if(isNaN(val)){ m.textContent='—'; m.style.color=''; return; }
+    const mod = Math.floor((val-10)/2);
+    m.textContent = (mod>=0?'+':'')+mod;
+    m.style.color = mod>0?'var(--off-white)':mod<0?'#e0a0a0':'var(--gray-mid)';
+  }
 
-function addEquip(nome = '', qty = '') {
-  const c = document.getElementById('equipContainer');
-  const d = document.createElement('div');
-  d.className = 'equip-item';
-  d.innerHTML = `
-    <input type="text" class="equip-name" placeholder="Nome do item…" value="${escHtml(nome)}" oninput="scheduleSave()">
-    <input type="number" class="equip-qty" placeholder="×1" min="0" value="${escHtml(qty)}" oninput="scheduleSave()">
-    <button class="del-btn" onclick="this.closest('.equip-item').remove();scheduleSave()">✕</button>
-  `;
-  c.appendChild(d);
-}
+  /* hp bar */
+  function updateHpBar() {
+    const a = parseFloat(document.getElementById('hpAtual').value)||0;
+    const mx = parseFloat(document.getElementById('hpMax').value)||0;
+    const bar = document.getElementById('hpBar');
+    if(mx<=0){ bar.style.width='100%'; bar.style.background='linear-gradient(90deg,#7a2020,#c0392b)'; return; }
+    const pct = Math.min(100,Math.max(0,(a/mx)*100));
+    bar.style.width = pct+'%';
+    bar.style.background = pct>50?'linear-gradient(90deg,#7a2020,#c0392b)':pct>25?'linear-gradient(90deg,#7a2020,#e04020)':'linear-gradient(90deg,#5a1010,#ff2000)';
+  }
 
-function addHabilidade(nome = '', desc = '', tipo = 'PASSIVA') {
-  const c = document.getElementById('habilidadesContainer');
-  const d = document.createElement('div');
-  d.className = 'habilidade-item';
-  const tipos = ['PASSIVA','ATIVA','REAÇÃO','BÔNUS','ESPECIAL'];
-  const opts = tipos.map(t => `<option ${t===tipo?'selected':''}>${t}</option>`).join('');
-  d.innerHTML = `
-    <div class="hab-tick"></div>
+  /* rows */
+  function addPericia(nome='',bonus='',checked=false){
+    const c=document.getElementById('periciasContainer');
+    const d=document.createElement('div'); d.className='pericia-item';
+    d.innerHTML=`<input type="checkbox" class="pericia-check" ${checked?'checked':''} onchange="scheduleSave()">
+    <input type="text" class="pericia-name" value="${e(nome)}" placeholder="Perícia…" oninput="scheduleSave()">
+    <input type="text" class="pericia-bonus" value="${e(bonus)}" placeholder="+0" oninput="scheduleSave()">
+    <button class="del-btn" onclick="this.closest('.pericia-item').remove();scheduleSave()">✕</button>`;
+    c.appendChild(d);
+  }
+
+  function addEquip(nome='',qty=''){
+    const c=document.getElementById('equipContainer');
+    const d=document.createElement('div'); d.className='equip-item';
+    d.innerHTML=`<input type="text" class="equip-name" placeholder="Nome do item…" value="${e(nome)}" oninput="scheduleSave()">
+    <input type="number" class="equip-qty" placeholder="×1" min="0" value="${e(qty)}" oninput="scheduleSave()">
+    <button class="del-btn" onclick="this.closest('.equip-item').remove();scheduleSave()">✕</button>`;
+    c.appendChild(d);
+  }
+
+  function addHabilidade(nome='',desc='',tipo='PASSIVA'){
+    const c=document.getElementById('habilidadesContainer');
+    const d=document.createElement('div'); d.className='habilidade-item';
+    const tipos=['PASSIVA','ATIVA','REAÇÃO','BÔNUS','ESPECIAL'];
+    const opts=tipos.map(t=>`<option ${t===tipo?'selected':''}>${t}</option>`).join('');
+    d.innerHTML=`<div class="hab-tick"></div>
     <div class="hab-content">
-      <input type="text" class="hab-name" value="${escHtml(nome)}" placeholder="NOME DA HABILIDADE" oninput="scheduleSave()">
-      <textarea class="hab-desc" placeholder="Descrição, efeito, custo de ação…" oninput="scheduleSave()">${escHtml(desc)}</textarea>
+      <input type="text" class="hab-name" value="${e(nome)}" placeholder="NOME DA HABILIDADE" oninput="scheduleSave()">
+      <textarea class="hab-desc" placeholder="Descrição, efeito, custo de ação…" oninput="scheduleSave()">${e(desc)}</textarea>
     </div>
     <div class="hab-meta">
       <select class="hab-type" onchange="scheduleSave()">${opts}</select>
       <button class="del-btn" onclick="this.closest('.habilidade-item').remove();scheduleSave()">✕</button>
-    </div>
-  `;
-  c.appendChild(d);
-}
+    </div>`;
+    c.appendChild(d);
+  }
 
-// ── modal ──────────────────────────────────────────────
-function showModal(title, placeholder, onConfirm) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal">
-      <div class="modal-title">${title}</div>
-      <input class="modal-input" type="text" placeholder="${placeholder}" autofocus>
-      <div class="modal-actions">
-        <button class="modal-btn" id="modalCancel">CANCELAR</button>
-        <button class="modal-btn primary" id="modalOk">CRIAR</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  const input = overlay.querySelector('.modal-input');
-  input.focus();
+  /* helpers */
+  function setSaveStatus(state){
+    const el=document.getElementById('saveStatus');
+    el.className=state;
+    el.textContent=state==='saving'?'↑ salvando…':state==='saved'?'✓ salvo':state==='error'?'✕ erro':'● aguardando';
+  }
 
-  const close = () => overlay.remove();
-  const confirm = () => { close(); onConfirm(input.value); };
+  let toastT;
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3000);
+  }
 
-  overlay.querySelector('#modalCancel').onclick = close;
-  overlay.querySelector('#modalOk').onclick = confirm;
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') close(); });
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-}
-
-// ── toast ──────────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// ── util ───────────────────────────────────────────────
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+  function e(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 </body>
 </html>
